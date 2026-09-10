@@ -951,3 +951,169 @@ section {
     }
   }
 }
+
+section {
+  name: "type_parameters_in_type_type"
+  description: "Tests for type parameter deduction within TypeType (type(T))."
+  test {
+    name: "type_param_in_type_type_int"
+    check_only: true
+    expr: "cast('hello', int)"
+    type_env {
+      name: "cast"
+      function {
+        overloads {
+          overload_id: "cast_val_to_type"
+          params { dyn {} }
+          params {
+            type {
+              type_param: "T"
+            }
+          }
+          result_type {
+            type_param: "T"
+          }
+        }
+      }
+    }
+    typed_result {
+      deduced_type {
+        primitive: INT64
+      }
+    }
+  }
+  test {
+    name: "type_param_in_type_type_string"
+    check_only: true
+    expr: "cast(123, string)"
+    type_env {
+      name: "cast"
+      function {
+        overloads {
+          overload_id: "cast_val_to_type"
+          params { dyn {} }
+          params {
+            type {
+              type_param: "T"
+            }
+          }
+          result_type {
+            type_param: "T"
+          }
+        }
+      }
+    }
+    typed_result {
+      deduced_type {
+        primitive: STRING
+      }
+    }
+  }
+  test {
+    name: "composite_type_param_in_type_type"
+    check_only: true
+    expr: "first_elem_type('data', type([1]))"
+    type_env {
+      name: "first_elem_type"
+      function {
+        overloads {
+          overload_id: "first_elem_type_list"
+          params { dyn {} }
+          params {
+            type {
+              list_type {
+                elem_type {
+                  type_param: "T"
+                }
+              }
+            }
+          }
+          result_type {
+            type_param: "T"
+          }
+        }
+      }
+    }
+    typed_result {
+      deduced_type {
+        primitive: INT64
+      }
+    }
+  }
+  test {
+    name: "nested_type_param_in_type_type"
+    check_only: true
+    expr: "unwrap_type(type(int))"
+    type_env {
+      name: "unwrap_type"
+      function {
+        overloads {
+          overload_id: "unwrap_type_t"
+          params {
+            type {
+              type {
+                type_param: "T"
+              }
+            }
+          }
+          result_type {
+            type {
+              type_param: "T"
+            }
+          }
+        }
+      }
+    }
+    typed_result {
+      deduced_type {
+        type {
+          primitive: INT64
+        }
+      }
+    }
+  }
+  test {
+    name: "type_map_erasure_comparison"
+    check_only: true
+    expr: "type({}) == map"
+    typed_result {
+      deduced_type {
+        primitive: BOOL
+      }
+    }
+  }
+  test {
+    name: "type_list_erasure_comparison"
+    check_only: true
+    expr: "type([1]) == list"
+    typed_result {
+      deduced_type {
+        primitive: BOOL
+      }
+    }
+  }
+  test {
+    name: "type_comparison_different_types_inequality"
+    expr: "type(1) != type(1u)"
+    typed_result {
+      result {
+        bool_value: true
+      }
+      deduced_type {
+        primitive: BOOL
+      }
+    }
+  }
+  test {
+    name: "type_comparison_different_types_equality"
+    expr: "type(1) == type(1u)"
+    typed_result {
+      result {
+        bool_value: false
+      }
+      deduced_type {
+        primitive: BOOL
+      }
+    }
+  }
+}
